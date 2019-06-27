@@ -1,72 +1,76 @@
-<p align="center"><img src="https://laravel.com/assets/img/components/logo-laravel.svg"></p>
+# Larave-Test
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+- laravel 5.8 test(mock) 範例~
 
-## About Laravel
+## init
+設定 .env 有關 db 的部份, 調整為自己的設定, 或是改用 `sqlite`
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+e.g.
+```environments
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=test-app
+DB_USERNAME=developer
+DB_PASSWORD=password
+```
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+$ git clone https://github.com/cscolabear/laravel-test.git
+$ comoser install
+$ php artisan migrate:fresh --seed
+$ vendor/bin/phpunit
 
-## Learning Laravel
+// ps.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+// 測試單一檔案
+$ vendor/bin/phpunit --filter SubmitLinksTest
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1400 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+// 略過 coverage report
+$ vendor/bin/phpunit --no-coverage
+```
+result
+![Screen Shot 2019-06-27 at 17 02 01](https://user-images.githubusercontent.com/4863629/60253114-23212280-98fe-11e9-94c7-0522b5cabe07.png)
 
-## Laravel Sponsors
+coverage report
+![Screen Shot 2019-06-27 at 17 02 44](https://user-images.githubusercontent.com/4863629/60253115-23212280-98fe-11e9-9a8c-eafe9c3dd3ea.png)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- [UserInsights](https://userinsights.com)
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
-- [User10](https://user10.com)
-- [Soumettre.fr](https://soumettre.fr/)
-- [CodeBrisk](https://codebrisk.com)
-- [1Forge](https://1forge.com)
-- [TECPRESSO](https://tecpresso.co.jp/)
-- [Runtime Converter](http://runtimeconverter.com/)
-- [WebL'Agence](https://weblagence.com/)
-- [Invoice Ninja](https://www.invoiceninja.com)
-- [iMi digital](https://www.imi-digital.de/)
-- [Earthlink](https://www.earthlink.ro/)
-- [Steadfast Collective](https://steadfastcollective.com/)
-- [We Are The Robots Inc.](https://watr.mx/)
-- [Understand.io](https://www.understand.io/)
-- [Abdel Elrafa](https://abdelelrafa.com)
-- [Hyper Host](https://hyper.host)
+## Test File /info
+- 原文可參考: https://laravel-news.com/your-first-laravel-application
+  - 本篇加入檢查 url 是否存在驗證
+  -  mock test 上述功能
+- 寫入 title, url, description 資料至 link table
+  - 為加快寫作先偷懶把 method 直接寫在 `routes/web.php`
+- 測試檔 `\Tests\Feature\SubmitLinksTest` 簡介:
+   - `guest_can_submit_a_new_link()`: 測試一般資料寫入與寫入後的轉跳
+   - `link_is_not_created_if_validation_fails()`: 未填資料時的 laravel validate 失敗錯誤訊息
+   - `link_is_not_created_with_an_invalid_url()`: 測試不合法的 url 被正常擋下
+   - `max_length_fails_when_too_long()`: 測試輸入資料內容過長時被 laravel validate 擋下
+   - `max_length_succeeds_when_under_max()`: 測試輸入資料長度剛好於 255 內
+   - `link_is_not_created_with_an_url_cant_be_reached()`: 啟用 url 是否存在, 不存在時正常被擋下; 這裡透過 mock 抽換自定的 laravel validate rule `App\Rules\UrlExists`
 
-## Contributing
+- `\Tests\Feature\UrlExistsTest`: mock 抽換 `App\Rules\UrlExistsHelper`
+  - `check_url_pass()`: url 實際存在, 通過檢查
+  - `check_url_fail()`: url 不存在
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### mock
+ - 使用依賴注入(Dependency Injection) 後方便使用 Mockery 進行測試
 
-## Security Vulnerabilities
+e.g.
+```php
+$url = 'https://www.google.com.tw';
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+// 建立 mock `UrlExistsHelper`
+$mock_helper = Mockery::mock(\App\Rules\UrlExistsHelper::class);
 
-## License
+// 定義預期行為、傳入值和回傳值
+$mock_helper->shouldReceive('isExists')->with($url)->once()->andReturn(false);
 
-The Laravel framework is open-source software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+// 抽換實際執行對象, 當使用到 `UrlExistsHelper` 一律使用剛剛 mock 出來的物件替換
+$this->app->instance(\App\Rules\UrlExistsHelper::class, $mock_helper);
+
+```
+
+- 當對像為外部 API 時 (e.g. curl), mock 可以隔離邏輯與 API 結果, 也能加速測試(不需等 API 回傳結果)
