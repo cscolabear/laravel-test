@@ -25,6 +25,9 @@
                 @if($errors->has('url'))
                 <span class="help-block">{{ $errors->first('url') }}</span>
                 @endif
+                <label for="check_url" style="cursor: pointer;">check Url
+                    <input type="checkbox" name="check_url" value="1" {{ (! empty(old('check_url')) ? 'checked' : '') }}>
+                </label>
             </div>
             <div class="form-group{{ $errors->has('description') ? ' has-error' : '' }}">
                 <label for="description">Description</label>
