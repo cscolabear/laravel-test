@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Mockery;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Validation\ValidationException;
@@ -10,7 +11,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 class SubmitLinksTest extends TestCase
 {
     use RefreshDatabase;
-
 
     /** @test */
     public function guest_can_submit_a_new_link()
@@ -45,7 +45,7 @@ class SubmitLinksTest extends TestCase
     /**
      * @test
      */
-    public function link_is_not_created_with_an_invalid_url($case)
+    public function link_is_not_created_with_an_invalid_url()
     {
         $this->withoutExceptionHandling();
 
@@ -119,5 +119,33 @@ class SubmitLinksTest extends TestCase
         $this->post('/submit', $data);
 
         $this->assertDatabaseHas('links', $data);
+    }
+
+    /** @test */
+    public function link_is_not_created_with_an_url_cant_be_reached()
+    {
+        $this->withoutExceptionHandling();
+
+        $mock_rule = Mockery::mock(\App\Rules\UrlExists::class);
+        $mock_rule->shouldReceive('message')->once()->andReturn('This url can’t be reached');
+        $mock_rule->shouldReceive('passes')->once()->andReturn(false);
+        $this->app->instance(\App\Rules\UrlExists::class, $mock_rule);
+
+        try {
+            $response = $this->post('/submit', [
+                'title' => 'url_cant_be_reached',
+                'url' => 'https://iamcola.io',
+                'description' => 'Example description.',
+                'check_url' => 1, // checkbox, key exists is checked
+            ]);
+        } catch(ValidationException $e) {
+            $this->assertEquals(
+                'This url can’t be reached',
+                $e->validator->errors()->first('url')
+            );
+            return;
+        }
+
+        $this->fail('The URL passed validation when it should have failed.');
     }
 }
